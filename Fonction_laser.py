@@ -42,18 +42,18 @@ def camera_connection(cam, camera):
         return False, camera
     return True, camera
 
-"""        self.ui.device_co_connect.clicked.connect(self.connection_device)
-        self.ui.device_co_refresh.clicked.connect(self.list_ports_device)
-        self.ui.camera_co_connect.clicked.connect(self.connection_camera)
-        self.ui.camera_co_refresh.clicked.connect(self.list_ports_camera)
-        self.ui.device_info.clicked.connect(self.get_device_info)
-        self.ui.control_button.clicked.connect(self.handle_beam)
-        self.ui.clear_button.clicked.connect(self.clearing_points)
-        self.ui.device_acquisition.clicked.connect(self.Acquisition)
-  
-        # Configuration des timers
-        QTimer.singleShot(100, self.update_background)
-        QTimer.singleShot(250, self.update_progress_bar)
+    self.ui.device_co_connect.clicked.connect(self.connection_device)
+    self.ui.device_co_refresh.clicked.connect(self.list_ports_device)
+    self.ui.camera_co_connect.clicked.connect(self.connection_camera)
+    self.ui.camera_co_refresh.clicked.connect(self.list_ports_camera)
+    self.ui.device_info.clicked.connect(self.get_device_info)
+    self.ui.control_button.clicked.connect(self.handle_beam)
+    self.ui.clear_button.clicked.connect(self.clearing_points)
+    self.ui.device_acquisition.clicked.connect(self.Acquisition)
+
+    # Configuration des timers
+    QTimer.singleShot(100, self.update_background)
+    QTimer.singleShot(250, self.update_progress_bar)
 
     # Méthode pour obtenir les informations sur le dispositif
     def get_device_info(self):
@@ -273,4 +273,3 @@ if __name__ == "__main__":
     MainWindow.show()
     # Lancer la boucle principale de l'application jusqu'à sa fermeture
     sys.exit(app.exec_())
-"""
