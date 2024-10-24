@@ -8,7 +8,11 @@ et de pouvoir les exécuter en ligne de commande.
 - Jules Toupin
 """
 
-
+#----------------------------section-import------------------------------- 
+from serial import Serial
+import serial.tools.list_ports
+import cv2
+import numpy as np
 
 """
 Propriété fonction 
@@ -20,8 +24,37 @@ variable d'entrée :
     
 variable de sortie :
 """
-import cv2
 
+"""
+Propriété fonction 
+Description : Création d'une connexion série    
+auteur/autrice : Jules Toupin    
+variable d'entrée : aucune    
+variable de sortie : un objet de type Serial
+"""
+def create_serial():
+    return Serial()
+
+
+"""
+Propriété fonction 
+Description : Connexion à un port série    
+auteur/autrice : Jules Toupin    
+variable d'entrée : port : le port à connecter, ser : l'objet de type Serial que l'on veut connecter au port    
+variable de sortie : un booléen qui valide la connexion ou non et l'objet de type Serial
+"""
+# Connexion à un port série
+def port_connection(port,ser):
+    try:
+        ser = Serial(port, 115200)
+        #logger.log_port_connection(port, "successful", None)
+        # print("Connexion au port : " + port + " réussie.")
+    except Exception as e:
+        #logger.log_port_connection(port, "failed", e)
+        # print("Connexion au port : " + port + " échouée...")
+        # print(e)
+        return False,ser
+    return True,ser
 
 
 # Initialisation de la capture vidéo
@@ -29,8 +62,7 @@ def camera_VideoCapture(cam: str):
     return cv2.VideoCapture(cam)
 
 # Connexion à une caméra
-def camera_connection(cam, camera):
-    #global camera
+def camera_connection(cam,camera):
     try:
         camera = cv2.VideoCapture(cam)
         #logger.log_camera_connection(cam, "successful", None)
@@ -39,100 +71,160 @@ def camera_connection(cam, camera):
         #logger.log_camera_connection(cam, "failed", e)
         # print("Connection to camera : " + str(cam) + "  failed...")
         # print(e)
-        return False, camera
-    return True, camera
+        return False,camera
+    return True,camera
 
-    self.ui.device_co_connect.clicked.connect(self.connection_device)
-    self.ui.device_co_refresh.clicked.connect(self.list_ports_device)
-    self.ui.camera_co_connect.clicked.connect(self.connection_camera)
-    self.ui.camera_co_refresh.clicked.connect(self.list_ports_camera)
-    self.ui.device_info.clicked.connect(self.get_device_info)
-    self.ui.control_button.clicked.connect(self.handle_beam)
-    self.ui.clear_button.clicked.connect(self.clearing_points)
-    self.ui.device_acquisition.clicked.connect(self.Acquisition)
+"""
+        self.ui.device_co_connect.clicked.connect(self.connection_device)
+        self.ui.device_co_refresh.clicked.connect(self.list_ports_device)
+        self.ui.camera_co_connect.clicked.connect(self.connection_camera)
+        self.ui.camera_co_refresh.clicked.connect(self.list_ports_camera)
+        self.ui.device_info.clicked.connect(self.get_device_info)
+        self.ui.control_button.clicked.connect(self.handle_beam)
+        self.ui.clear_button.clicked.connect(self.clearing_points)
+        self.ui.device_acquisition.clicked.connect(self.Acquisition)
+    
+        # Configuration des timers
+        QTimer.singleShot(100, self.update_background)
+        QTimer.singleShot(250, self.update_progress_bar)
+"""  
 
-    # Configuration des timers
-    QTimer.singleShot(100, self.update_background)
-    QTimer.singleShot(250, self.update_progress_bar)
-
-    # Méthode pour obtenir les informations sur le dispositif
-    def get_device_info(self):
+"""
+Propriété fonction 
+Description : Méthode pour obtenir les informations sur le dispositif  
+auteur/autrice : Jules Toupin    
+variable d'entrée : Laser_connecte : un booléen qui valide la connexion ou non;
+                  Laser_ser : l'objet de type Serial connecté au dispositif    
+variable de sortie : aucune idée de ce que ces 4 variables retournées sont
+"""
+def get_device_info(Laser_connecte,Laser_ser):
     # Si le contrôleur est connecté
-        if self.ui.controller_connected:
+        if Laser_connecte == 0:
             # Envoie de commandes au port série pour obtenir les informations
-            Laser.ser.write('GetDevInfo,Controller,0,Name\n'.encode())
-            name = Laser.ser.readline().decode('ascii','replace')
+            Laser_ser.write('GetDevInfo,Controller,0,Name\n'.encode())
+            name = Laser_ser.readline().decode('ascii','replace')
             # print(name)
-            Laser.ser.write('GetDevInfo,Controller,0,Version\n'.encode())
-            vers = Laser.ser.readline().decode('ascii','replace')
+            Laser_ser.write('GetDevInfo,Controller,0,Version\n'.encode())
+            vers = Laser_ser.readline().decode('ascii','replace')
             # print(vers)
-            Laser.ser.write('GetDevInfo,SensorHead,0,Name\n'.encode())
-            nameSH = Laser.ser.readline().decode('ascii','replace')
+            Laser_ser.write('GetDevInfo,SensorHead,0,Name\n'.encode())
+            nameSH = Laser_ser.readline().decode('ascii','replace')
             # print(nameSH)
-            Laser.ser.write('GetDevInfo,SensorHead,0,Version\n'.encode())
-            versSH = Laser.ser.readline().decode('ascii','replace')
+            Laser_ser.write('GetDevInfo,SensorHead,0,Version\n'.encode())
+            versSH = Laser_ser.readline().decode('ascii','replace')
             # print(versSH)
             # Mise à jour de l'interface utilisateur avec les informations obtenues
-            self.ui.device_info_l.setText("\nControler:\n"+ name + vers +"Laser:\n"+ nameSH + versSH)
+            #self.ui.device_info_l.setText("\nControler:\n"+ name + vers +"Laser:\n"+ nameSH + versSH)
             #logger.log_device_info(name, vers, nameSH, versSH)
+            return name,vers,nameSH,versSH
 
-    # Méthode pour lister les ports disponibles pour le dispositif
-    def list_ports_device(self):
-        # Récupération des ports série disponibles
-        ports = serial.tools.list_ports.comports()
-        # Effacement de la liste des ports de l'interface utilisateur
-        self.ui.device_co_listbox.clear()
-        # Si des ports sont disponibles
-        if (len(ports) != 0):
-            devices = []
-            # Pour chaque port disponible, ajout à la liste des ports de l'interface utilisateur
-            for p in ports:
-                self.ui.device_co_listbox.addItem(p.device)
-        else:
-            self.ui.device_co_listbox.addItem("No device found")
+    
+"""
+Propriété fonction 
+Description : Méthode pour lister les ports disponibles pour le dispositif
+auteur/autrice : Jules Toupin    
+variable d'entrée : aucune
+variable de sortie : liste_ports : une liste des ports disponibles,
+                     message : un message qui indique si des ports ont été trouvés ou non
+"""
+def list_ports_device():
+    # Récupération des ports série disponibles
+    ports = serial.tools.list_ports.comports()
+    
+    # Effacement de la liste des ports
+    liste_ports = []
+    # Si des ports sont disponibles
+    if (len(ports) != 0):
+        devices = []
+        # Pour chaque port disponible, ajout à la liste des ports de l'interface utilisateur
+        for p in ports:
+            liste_ports.append(p.device)
+        return liste_ports,"devices found"
+    else:
+        return liste_ports,"No device found"
 
-    # Méthode pour établir une connexion avec le dispositif
-    def connection_device(self):
-        # Récupération du port sélectionné dans l'interface utilisateur
-        port = str(self.ui.device_co_listbox.currentItem().text())
-        # Si un port est sélectionné
-        if (port):
-            # Tentative de connexion au port
-            self.ui.controller_connected = Laser.port_connection(port)
+"""
+Propriété fonction 
+Description : Méthode pour établir une connexion avec le dispositif
+auteur/autrice : Jules Toupin    
+variable d'entrée : port_str : le port sélectionné dans l'interface utilisateur,
+                    Laser_connecte : un booléen qui valide la connexion ou non
+variable de sortie : laser_connecte : un booléen qui valide la connexion ou non
+"""
+def connection_device(port_str,Laser_connecte):
+    # Récupération du port sélectionné dans l'interface utilisateur
+    port = str(port_str)
+    # Si un port est sélectionné
+    if (port):
+        # Tentative de connexion au port
+        Laser_connecte = Laser.port_connection(port)[0]
+    return Laser_connecte
 
-    # Méthode pour lister les caméras disponibles
-    def list_ports_camera(self):
-        index = 0
-        arr = []
-        i = 5
+
+"""
+Propriété fonction 
+Description : Méthode pour lister les caméras disponibles
+auteur/autrice : Jules Toupin    
+variable d'entrée : aucune
+variable de sortie : liste_cameras : une liste des caméras disponibles,
+                        message : un message qui indique si des caméras ont été trouvées ou non
+"""
+def list_ports_camera():
+    index = 0
+    arr = []
+    i = 5
         # Effacer la liste déroulante
-        self.ui.camera_co_listbox.clear()
-        while i > 0:
-            # Ouvrir une capture vidéo à partir de l'index actuel
-            cap = cv2.VideoCapture(index)
-            # Vérifier si la capture vidéo a réussi
-            if cap.read()[0]:
-                # Ajouter l'index de la caméra dans le tableau
-                arr.append(index)
-                # Créer un nom de périphérique pour la caméra en fonction du système d'exploitation
-                device = str(index)
-                # Ajouter le nom de périphérique à la liste déroulante
-                self.ui.camera_co_listbox.addItem(device)
-                cap.release()
-            index += 1
-            i -= 1
-        # Si aucune caméra n'a été trouvée, afficher un message approprié dans la liste déroulante
-        if (len(arr)==0):
-            self.ui.camera_co_listbox.addItem("No device found")
+    liste_cameras = []
+    while i > 0:
+        # Ouvrir une capture vidéo à partir de l'index actuel
+        cap = cv2.VideoCapture(index)
+        # Vérifier si la capture vidéo a réussi
+        if cap.read()[0]:
+            # Ajouter l'index de la caméra dans le tableau
+            arr.append(index)
+            # Créer un nom de périphérique pour la caméra en fonction du système d'exploitation
+            device = str(index)
+            # Ajouter le nom de périphérique à la liste déroulante
+            liste_cameras.append(device)
+                                                #self.ui.camera_co_listbox.addItem(device)   ancien programme
+            cap.release()
+        index += 1
+        i -= 1
+    # Si aucune caméra n'a été trouvée, afficher un message approprié dans la liste déroulante
+    if (len(arr)==0):
+        return liste_cameras,"No device found"
+    else:
+        return liste_cameras,"devices found"
+    
 
-    # Méthode pour établir une connexion à la caméra sélectionnée dans la liste déroulante camera_co_listbox
-    def connection_camera(self):
-        # Récupérer le nom de la caméra sélectionnée dans la liste déroulante
-        self.ui.cam = str(self.ui.camera_co_listbox.currentItem().text())
-        if (self.ui.cam):
-            # Etablir la connexion à la caméra en utilisant le nom de la caméra
-            self.ui.camera_connected = Laser.camera_connection(self.ui.cam)
 
+"""
+Ancien programme
+# Méthode pour établir une connexion à la caméra sélectionnée dans la liste déroulante camera_co_listbox
+def connection_camera(self):
+    # Récupérer le nom de la caméra sélectionnée dans la liste déroulante
+    self.ui.cam = str(self.ui.camera_co_listbox.currentItem().text())
+    if (self.ui.cam):
+        # Etablir la connexion à la caméra en utilisant le nom de la caméra
+        self.ui.camera_connected = Laser.camera_connection(self.ui.cam)
+"""
+
+"""
+Propriété fonction 
+Description : Méthode pour établir une connexion à la caméra sélectionnée avec son nom
+auteur/autrice : Jules Toupin    
+variable d'entrée : nom caméra : le nom de la caméra sélectionnée avec la fonction list_ports_camera,
+variable de sortie : 
+
+"""
+def connection_camera(nom_camera):
+    # Récupérer le nom de la caméra sélectionnée dans la liste déroulante
+    self.ui.cam = str(self.ui.camera_co_listbox.currentItem().text())
+    if (self.ui.cam):
+        # Etablir la connexion à la caméra en utilisant le nom de la caméra
+        self.ui.camera_connected = Laser.camera_connection(self.ui.cam)
+    
+"""
     # Méthode pour sauvegarder l'état actuel du système
     def save_image(self):
         global n
@@ -273,3 +365,4 @@ if __name__ == "__main__":
     MainWindow.show()
     # Lancer la boucle principale de l'application jusqu'à sa fermeture
     sys.exit(app.exec_())
+"""
