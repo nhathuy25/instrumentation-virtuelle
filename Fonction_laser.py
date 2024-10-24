@@ -259,9 +259,13 @@ def camera_connection(cam, camera):
         #logger.log_controller_state(self.ui.controller_connected)
 
     #La def pour clear:
-    def clearing_points (self):
-        self.ui.camera_return.vider()
 
+    def clearing_points(self):
+    self.clear_points() 
+
+    def clear_points(self):
+    # Supposant que les points sont stockés dans une liste
+    self.points = []  # Clear les points en réinitialise la liste
 
 # Vérifier que ce fichier est le fichier principal qui est exécuté
 if __name__ == "__main__":
