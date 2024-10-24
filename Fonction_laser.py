@@ -9,6 +9,8 @@ et de pouvoir les exécuter en ligne de commande.
 """
 
 #----------------------------section-import------------------------------- 
+import os
+import time
 from serial import Serial
 import serial.tools.list_ports
 import cv2
@@ -61,7 +63,7 @@ Propriété fonction
 Description : Méthode pour établir une connexion à la caméra sélectionnée avec son nom
     depend de la fonction list_ports_camera pour obtenir le nom de la camera
 
-    Commentaire 24/10: La fonction peut se servir a rien, on utilise connecter_camera() et un indice defini par le GUI
+    Commentaire 24/10: La fonction peut se servir a rien, et on utilise connecter_camera() et un indice defini par le GUI
 
 auteur/autrice : Huy NGUYEN    
 variable d'entrée :     aucune
@@ -236,44 +238,42 @@ def connection_camera(self):
         self.ui.camera_connected = Laser.camera_connection(self.ui.cam)
 """
 
+"""
+Propriété fonction 
+Description : Fonction pour sauvegarder l'image de la camera. Les images sauvegardées sont stockées dans un répertoire nommé 'Measures'
+    
+auteur/autrice : Huy NGUYEN
+    
+variable d'entrée :     - aucune
+variable de sortie :    - aucune
+"""
+# Repertoire des images sauvegardées
+image_directory = "Measures/"
 # Méthode pour sauvegarder l'état actuel du système
 def save_image(self):
-    global n
-
     if self.ui.camera_connected:
-        if not os.path.exists(image_directory+"mesure"+str(n)):
-            os.makedirs(image_directory+"mesure"+str(n))
+        # Prendre le temps actuel (ex: 20241024_102030)
+        current_time = time.strftime("%Y%m%d_%H%M%S")
+
+        # Chemin du répertoire de la mesure
+        save_path = image_directory + "mesure_" + current_time
+
+        # Créer un répertoire s'il n'existe pas
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
 
         # Capture de l'image
-        pixmap = self.read_camera()
+        rgb_image = self.read_camera()  # Read RGB image from the camera
 
-        # Convertir QPixmap en QImage
-        q_image = pixmap.toImage()
+        # Vérifier si l'image a été capturée correctement
+        if rgb_image is not None:
+            # Sauvegarder l'image en tant que fichier .png
+            image_path = os.path.join(save_path, f"acquisition_{current_time}.png")
+            cv2.imwrite(image_path, rgb_image)
 
-        # Utiliser QPainter pour dessiner la croix rouge
-        painter = QPainter(q_image)
-        painter.setPen(QColor(Qt.red))
-        
-        # Taille de la croix
-        cross_size = 10
-        
-        # Calcul des coordonnées du milieu de l'image
-        mid_x = q_image.width() // 2
-        mid_y = q_image.height() // 2
-
-        # Dessiner la croix rouge
-        painter.drawLine(mid_x - cross_size, mid_y, mid_x + cross_size, mid_y)
-        painter.drawLine(mid_x, mid_y - cross_size, mid_x, mid_y + cross_size)
-
-        # Fin de l'édition de l'image
-        painter.end()
-
-        # Sauvegarde de l'image
-        q_image.save(image_directory +"/mesure"+str(n)+"/"+ "acquisition n°" + str(n) + ".png")
-        n += 1
-
-        # Log
-        #logger.log_camera_save(self.ui.camera_connected, image_directory, n)
+            print(f"Image saved at: {image_path}")
+        else:
+            print("Erreur: Impossible de capturer l'image")
 
 def Acquisition(self):
     print("Acquisition")
@@ -297,22 +297,24 @@ variable de sortie  :
 def read_camera(id_cam):
     # Verifier la connexion de la camera, la variable camera est un objet de type VideoCapture
     camera = connecter_camera(id_cam)
+    
     # If a camera is connected
-    if (camera != None):
-        '''  ancien programme
-        # Créer un objet de capture vidéo à partir de l'index de la caméra
-        camera = cv2.VideoCapture(id_cam)
-        '''
-        #print("La camera read 1 {} camera read 0 {}".format(camera.read()[0],camera.read()))
+    if camera is not None:
         # Lire l'image du flux vidéo et la convertir en image RGB
-        cv2image = cv2.cvtColor(camera.read()[1], cv2.COLOR_BGR2RGB)
-        # Redimensionner l'image en 400 x 315 pixels
-        img = cv2.resize(cv2image, (400, 315))
-        # Convertir l'image en format QPixmap pour affichage dans l'interface utilisateur
-        return convert_cv_qt(img)
+        ret, frame = camera.read()
+        if ret:
+            # Convertir l'image BGR (par défaut de OpenCV) en RGB
+            rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            # Return the RGB image
+            return rgb_image  
+        
+        else:
+            print("Error: Impossible de lire l'image de la caméra")
+            return None
+    # Si on ne peut pas trouver une camera
     else:
-        print("Error: Aucune camera connectee")
-        return None 
+        print("Error: Aucune caméra connectée")
+        return None
 
 
 # Méthode pour convertir une image OpenCV en un format compatible avec l'affichage dans l'interface utilisateur
