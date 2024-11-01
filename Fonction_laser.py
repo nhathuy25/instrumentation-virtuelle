@@ -9,6 +9,8 @@ et de pouvoir les exécuter en ligne de commande.
 """
 
 #----------------------------section-import------------------------------- 
+import os
+import time
 from serial import Serial
 import serial.tools.list_ports
 import cv2
@@ -56,38 +58,63 @@ def port_connection(port,ser):
         return False,ser
     return True,ser
 
+"""
+Propriété fonction 
+Description : Méthode pour établir une connexion à la caméra sélectionnée avec son nom
+    depend de la fonction list_ports_camera pour obtenir le nom de la camera
 
-# Initialisation de la capture vidéo
-def camera_VideoCapture(cam: str):
-    return cv2.VideoCapture(cam)
+    Commentaire 24/10: La fonction peut se servir a rien, et on utilise connecter_camera() et un indice defini par le GUI
 
-# Connexion à une caméra
-def camera_connection(cam,camera):
-    try:
-        camera = cv2.VideoCapture(cam)
-        #logger.log_camera_connection(cam, "successful", None)
-        # print("Connection to camera : " + str(cam) + " successful.")
-    except Exception as e:
-        #logger.log_camera_connection(cam, "failed", e)
-        # print("Connection to camera : " + str(cam) + "  failed...")
-        # print(e)
-        return False,camera
-    return True,camera
+auteur/autrice : Huy NGUYEN    
+variable d'entrée :     aucune
+variable de sortie :    
+
+ -- Version acienne:
+def connection_camera():
+
+    # Récupérer le nom de la caméra sélectionnée dans la liste déroulante
+    self.ui.cam = str(self.ui.camera_co_listbox.currentItem().text())
+    if (self.ui.cam):
+        # Etablir la connexion à la caméra en utilisant le nom de la caméra
+        self.ui.camera_connected = Laser.camera_connection(self.ui.cam)
 
 """
-        self.ui.device_co_connect.clicked.connect(self.connection_device)
-        self.ui.device_co_refresh.clicked.connect(self.list_ports_device)
-        self.ui.camera_co_connect.clicked.connect(self.connection_camera)
-        self.ui.camera_co_refresh.clicked.connect(self.list_ports_camera)
-        self.ui.device_info.clicked.connect(self.get_device_info)
-        self.ui.control_button.clicked.connect(self.handle_beam)
-        self.ui.clear_button.clicked.connect(self.clearing_points)
-        self.ui.device_acquisition.clicked.connect(self.Acquisition)
+def connection_camera():
+    liste_cameras, message = list_ports_camera()
+    if (len(liste_cameras) != 0):
+        # Récupérer le nom de la caméra sélectionnée dans la liste déroulante
+        cam = liste_cameras[0]
+        # Etablir la connexion à la caméra en utilisant le nom de la caméra
+        camera_connected = connecter_camera(cam)
+        return camera_connected
+    else:
+        return None
+
+"""
+Propriété fonction 
+Description : Fonction pour connecter à la camera à partir de l'indice de la camera
+    !!! depend de la fonction list_ports_camera pour obtenir l'indice      
+
+auteur/autrice : Huy NGUYEN
     
-        # Configuration des timers
-        QTimer.singleShot(100, self.update_background)
-        QTimer.singleShot(250, self.update_progress_bar)
-"""  
+variable d'entrée : id_cam -  id(indice) de la camera
+variable de sortie : 
+    - Si reussi a trouver un camera: 
+                camera - un objet de type VideoCapture
+    - Sinon:
+                None
+        -> Sert a la fonction 'read_camera()' pour lire l'image de la camera
+"""
+def connecter_camera(id_cam):
+    try:
+        camera = cv2.VideoCapture(id_cam)  # Connect to the camera
+        # If the camera cannot be opened, raise an exception
+        if not camera.isOpened():
+            raise Exception(f"Unable to open camera with ID {id_cam}")
+        return camera
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
 
 """
 Propriété fonction 
@@ -150,6 +177,9 @@ auteur/autrice : Jules Toupin
 variable d'entrée : port_str : le port sélectionné dans l'interface utilisateur,
                     Laser_connecte : un booléen qui valide la connexion ou non
 variable de sortie : laser_connecte : un booléen qui valide la connexion ou non
+
+Update 24/10/2024: Huy a supprimé 'Laser.' 
+                'Laser_connecte = Laser.port_connection(port)[0]' -> 'Laser_connecte = port_connection(port)[0]'
 """
 def connection_device(port_str,Laser_connecte):
     # Récupération du port sélectionné dans l'interface utilisateur
@@ -157,7 +187,7 @@ def connection_device(port_str,Laser_connecte):
     # Si un port est sélectionné
     if (port):
         # Tentative de connexion au port
-        Laser_connecte = Laser.port_connection(port)[0]
+        Laser_connecte = port_connection(port)[0]
     return Laser_connecte
 
 
@@ -166,7 +196,7 @@ Propriété fonction
 Description : Méthode pour lister les caméras disponibles
 auteur/autrice : Jules Toupin    
 variable d'entrée : aucune
-variable de sortie : liste_cameras : une liste des caméras disponibles,
+variable de sortie : liste_cameras : une liste des indices des caméras disponibles,
                         message : un message qui indique si des caméras ont été trouvées ou non
 """
 def list_ports_camera():
@@ -197,7 +227,6 @@ def list_ports_camera():
         return liste_cameras,"devices found"
     
 
-
 """
 Ancien programme
 # Méthode pour établir une connexion à la caméra sélectionnée dans la liste déroulante camera_co_listbox
@@ -211,95 +240,97 @@ def connection_camera(self):
 
 """
 Propriété fonction 
-Description : Méthode pour établir une connexion à la caméra sélectionnée avec son nom
-auteur/autrice : Jules Toupin    
-variable d'entrée : nom caméra : le nom de la caméra sélectionnée avec la fonction list_ports_camera,
-variable de sortie : 
-
-"""
-def connection_camera(nom_camera):
-    # Récupérer le nom de la caméra sélectionnée dans la liste déroulante
-    self.ui.cam = str(self.ui.camera_co_listbox.currentItem().text())
-    if (self.ui.cam):
-        # Etablir la connexion à la caméra en utilisant le nom de la caméra
-        self.ui.camera_connected = Laser.camera_connection(self.ui.cam)
+Description : Fonction pour sauvegarder l'image de la camera. Les images sauvegardées sont stockées dans un répertoire nommé 'Measures'
     
-"""
-    # Méthode pour sauvegarder l'état actuel du système
-    def save_image(self):
-        global n
-
-        if self.ui.camera_connected:
-            if not os.path.exists(image_directory+"mesure"+str(n)):
-                os.makedirs(image_directory+"mesure"+str(n))
-
-            # Capture de l'image
-            pixmap = self.read_camera()
-
-            # Convertir QPixmap en QImage
-            q_image = pixmap.toImage()
-
-            # Utiliser QPainter pour dessiner la croix rouge
-            painter = QPainter(q_image)
-            painter.setPen(QColor(Qt.red))
-            
-            # Taille de la croix
-            cross_size = 10
-            
-            # Calcul des coordonnées du milieu de l'image
-            mid_x = q_image.width() // 2
-            mid_y = q_image.height() // 2
-
-            # Dessiner la croix rouge
-            painter.drawLine(mid_x - cross_size, mid_y, mid_x + cross_size, mid_y)
-            painter.drawLine(mid_x, mid_y - cross_size, mid_x, mid_y + cross_size)
-
-            # Fin de l'édition de l'image
-            painter.end()
-
-            # Sauvegarde de l'image
-            q_image.save(image_directory +"/mesure"+str(n)+"/"+ "acquisition n°" + str(n) + ".png")
-            n += 1
-
-            # Log
-            #logger.log_camera_save(self.ui.camera_connected, image_directory, n)
+auteur/autrice : Huy NGUYEN
     
-    def Acquisition(self):
-        print("Acquisition")
-        #logger.log_camera_acquisition()
-        self.save_image()
-        Vu=self.get_VuMetre(pourcentage=1)        
-        # print("Vu = "+str(Vu))
+variable d'entrée :     - aucune
+variable de sortie :    - aucune
+"""
+# Repertoire des images sauvegardées
+image_directory = "Measures/"
+# Méthode pour sauvegarder l'état actuel du système
+def save_image(self):
+    if self.ui.camera_connected:
+        # Prendre le temps actuel (ex: 20241024_102030)
+        current_time = time.strftime("%Y%m%d_%H%M%S")
 
-    # Méthode pour lire le flux vidéo de la caméra connectée
-    def read_camera(self):
-        if (self.ui.camera_connected):
-            # Créer un objet de capture vidéo à partir de l'index de la caméra
-            camera = Laser.camera_VideoCapture(int(self.ui.cam))
-            #print("La camera read 1 {} camera read 0 {}".format(camera.read()[0],camera.read()))
-            # Lire l'image du flux vidéo et la convertir en image RGB
-            cv2image = cv2.cvtColor(camera.read()[1], cv2.COLOR_BGR2RGB)
-            # Redimensionner l'image en 400 x 315 pixels
-            img = cv2.resize(cv2image, (400, 315))
-            # Convertir l'image en format QPixmap pour affichage dans l'interface utilisateur
-            return self.convert_cv_qt(img)
+        # Chemin du répertoire de la mesure
+        save_path = image_directory + "mesure_" + current_time
+
+        # Créer un répertoire s'il n'existe pas
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+
+        # Capture de l'image
+        rgb_image = self.read_camera()  # Read RGB image from the camera
+
+        # Vérifier si l'image a été capturée correctement
+        if rgb_image is not None:
+            # Sauvegarder l'image en tant que fichier .png
+            image_path = os.path.join(save_path, f"acquisition_{current_time}.png")
+            cv2.imwrite(image_path, rgb_image)
+
+            print(f"Image saved at: {image_path}")
         else:
-            return None 
+            print("Erreur: Impossible de capturer l'image")
 
-    # Méthode pour convertir une image OpenCV en un format compatible avec l'affichage dans l'interface utilisateur
-    def convert_cv_qt(self, cv_img):
-        # Convertir l'image en RGB
-        rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
-        # Récupérer les dimensions de l'image
-        h, w, ch = rgb_image.shape
-        # Calculer le nombre de bytes par ligne de l'image
-        bytes_per_line = ch * w
-        # Convertir l'image en format QImage
-        convert_to_Qt_format = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
-        # Redimensionner l'image pour l'affichage
-        p = convert_to_Qt_format.scaled(400, 315, Qt.KeepAspectRatio)
-        return QPixmap.fromImage(p)
+def Acquisition(self):
+    print("Acquisition")
+    #logger.log_camera_acquisition()
+    self.save_image()
+    Vu=self.get_VuMetre(pourcentage=1)        
+    # print("Vu = "+str(Vu))
 
+"""
+Propriété fonction 
+Description : Fonction pour lire l'image de la camera
+
+auteur/autrice : Huy NGUYEN
+
+variable d'entrée   : id_cam - (indice de la camera choisie a partir de list_ports_camera)    
+variable de sortie  : 
+    - Si le camera est connecte : image
+    - Sinon                     : None 
+
+"""
+def read_camera(id_cam):
+    # Verifier la connexion de la camera, la variable camera est un objet de type VideoCapture
+    camera = connecter_camera(id_cam)
+    
+    # If a camera is connected
+    if camera is not None:
+        # Lire l'image du flux vidéo et la convertir en image RGB
+        ret, frame = camera.read()
+        if ret:
+            # Convertir l'image BGR (par défaut de OpenCV) en RGB
+            rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            # Return the RGB image
+            return rgb_image  
+        
+        else:
+            print("Error: Impossible de lire l'image de la caméra")
+            return None
+    # Si on ne peut pas trouver une camera
+    else:
+        print("Error: Aucune caméra connectée")
+        return None
+
+
+# Méthode pour convertir une image OpenCV en un format compatible avec l'affichage dans l'interface utilisateur
+def convert_cv_qt(self, cv_img):
+    # Convertir l'image en RGB
+    rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
+    # Récupérer les dimensions de l'image
+    h, w, ch = rgb_image.shape
+    # Calculer le nombre de bytes par ligne de l'image
+    bytes_per_line = ch * w
+    # Convertir l'image en format QImage
+    convert_to_Qt_format = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
+    # Redimensionner l'image pour l'affichage
+    p = convert_to_Qt_format.scaled(400, 315, Qt.KeepAspectRatio)
+    return QPixmap.fromImage(p)
+"""
     # Méthode pour mettre à jour l'image de fond de l'interface utilisateur
     def update_background(self):
         if (self.ui.camera_connected): # Si la caméra est connectée
