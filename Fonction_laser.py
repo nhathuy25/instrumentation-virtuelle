@@ -250,30 +250,23 @@ variable de sortie :    - aucune
 # Repertoire des images sauvegardées
 image_directory = "Measures/"
 # Méthode pour sauvegarder l'état actuel du système
-def save_image(self):
-    if self.ui.camera_connected:
-        # Prendre le temps actuel (ex: 20241024_102030)
-        current_time = time.strftime("%Y%m%d_%H%M%S")
+def save_image(cam_id):
 
-        # Chemin du répertoire de la mesure
-        save_path = image_directory + "mesure_" + current_time
+    # Prendre le temps actuel (ex: 20241024_102030)
+    current_time = time.strftime("%Y%m%d_%H%M%S")
 
-        # Créer un répertoire s'il n'existe pas
-        if not os.path.exists(save_path):
-            os.makedirs(save_path)
+    # Capture de l'image
+    rgb_image = read_camera(cam_id)  # Read RGB image from the camera
 
-        # Capture de l'image
-        rgb_image = self.read_camera()  # Read RGB image from the camera
+    # Vérifier si l'image a été capturée correctement
+    if rgb_image is not None:
+        # Sauvegarder l'image en tant que fichier .png
+        image_path = os.path.join(image_directory, f"acquisition_{current_time}.png")
+        cv2.imwrite(image_path, rgb_image)
 
-        # Vérifier si l'image a été capturée correctement
-        if rgb_image is not None:
-            # Sauvegarder l'image en tant que fichier .png
-            image_path = os.path.join(save_path, f"acquisition_{current_time}.png")
-            cv2.imwrite(image_path, rgb_image)
-
-            print(f"Image saved at: {image_path}")
-        else:
-            print("Erreur: Impossible de capturer l'image")
+        print(f"Image saved at: {image_path}")
+    else:
+        print("Erreur: Impossible de capturer l'image")
 
 def Acquisition(self):
     print("Acquisition")
