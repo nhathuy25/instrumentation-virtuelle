@@ -95,7 +95,7 @@ Propriété fonction
 Description : Fonction pour connecter à la camera à partir de l'indice de la camera
     !!! depend de la fonction list_ports_camera pour obtenir l'indice      
 
-auteur/autrice : Huy NGUYEN
+auteur/autrice : Huy NGUYEN, Khoa VU
     
 variable d'entrée : id_cam -  id(indice) de la camera
 variable de sortie : 
@@ -279,7 +279,7 @@ def Acquisition(self):
 Propriété fonction 
 Description : Fonction pour lire l'image de la camera
 
-auteur/autrice : Huy NGUYEN
+auteur/autrice : Huy NGUYEN, Khoa VU
 
 variable d'entrée   : id_cam - (indice de la camera choisie a partir de list_ports_camera)    
 variable de sortie  : 
@@ -297,9 +297,8 @@ def read_camera(id_cam):
         ret, frame = camera.read()
         if ret:
             # Convertir l'image BGR (par défaut de OpenCV) en RGB
-            #rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-            rgb_image = frame
+        
+            rgb_image = convert_cv_to_rgb(frame)
             # Return the RGB image
             return rgb_image  
         
@@ -311,49 +310,65 @@ def read_camera(id_cam):
         print("Error: Aucune caméra connectée")
         return None
 
+"""
+# Propriété fonction
+# Description      : Méthode pour convertir une image OpenCV en RGB.
+            Verifier si l'image est en RGB ou BGR et convertir en RGB si nécessaire.
+# Auteur/autrice   : Lina EL MEKAOUI
+# Variable d'entrée :   frame 
+# Variable de sortie :  rgb_image 
 
-# Méthode pour convertir une image OpenCV en un format compatible avec l'affichage dans l'interface utilisateur
-def convert_cv_qt(self, cv_img):
-    # Convertir l'image en RGB
-    rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
-    # Récupérer les dimensions de l'image
-    h, w, ch = rgb_image.shape
-    # Calculer le nombre de bytes par ligne de l'image
-    bytes_per_line = ch * w
-    # Convertir l'image en format QImage
-    convert_to_Qt_format = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
-    # Redimensionner l'image pour l'affichage
-    p = convert_to_Qt_format.scaled(400, 315, Qt.KeepAspectRatio)
-    return QPixmap.fromImage(p)
-
-
-def display_camera_feed(camera_id=0):
-    # Initialize the VideoCapture object with the specified camera ID
-    camera = cv2.VideoCapture(camera_id)
+"""
+def convert_cv_to_rgb(frame):
+    # Vérifie si l'image n'est pas en RGB ( est en format standard OpenCV)
+    # Vérifie que l'image contient trois canaux de couleur et compare la moyenne du premier canal et du dernier canal 
+    # (le premier canal est moins élevé en moyenne en genéral l'image est en BGR)
+    if frame.shape[2] == 3 and frame[..., 0].mean() < frame[..., 2].mean(): 
+        # Convertit en RGB 
+        print("Image est en BGR")
+        rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        return rgb_image
+    else:
+        print("Image est en RGB")
+        return frame
     
-    # Check if the camera is opened successfully
+"""
+Propriété fonction 
+Description : Affichage le video de la camera sur une fenetre (Appuyer sur 'q' pour quitter la fenêtre)
+
+auteur/autrice : Huy NGUYEN, Jules Toupin
+
+variable d'entrée   : id_cam - (indice de la camera choisie a partir de list_ports_camera)    
+variable de sortie  : None
+
+"""
+def display_camera_feed(id_cam=0): # l'indice de camera est mis par defaut a 0
+    # Initialiser la camera de type cv2.VideoCapture avec l'indice de la camera
+    camera = cv2.VideoCapture(id_cam)
+    
+    # Verifier si la camera est ouverte
     if not camera.isOpened():
-        print("Error: Could not open camera.")
+        print("Erreur: Impossible d'ouvrir la camera.")
         return
 
-    # Loop to continuously capture frames and display them
+    # Loop pour lire les images de la camera
     while True:
         # Capture frame-by-frame
         ret, frame = camera.read()
         
-        # If frame is read correctly, ret will be True
+        # Si la frame (image) n'est pas lue, ret serais False
         if not ret:
-            print("Error: Could not read frame.")
+            print("Erreur: Impossible de lire l'image de la caméra.")
             break
 
-        # Display the resulting frame in a window
+        # Display the frame
         cv2.imshow('Camera Feed', frame)
 
-        # Press 'q' to exit the loop
+        # Appuyer sur 'q' pour quitter la fenêtre
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-    # Release the camera and close the window
+    # En fin de boucle, relâcher la camera et fermer les fenêtres
     camera.release()
     cv2.destroyAllWindows()
 
