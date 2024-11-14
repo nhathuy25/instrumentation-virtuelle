@@ -239,7 +239,7 @@ variable de sortie : un booléen qui valide la connexion ou non et l'objet de ty
 # Connexion à un port série
 def port_connection(port,ser):
     try:
-        ser = Serial(port, 9600)
+        ser = Serial(port, 115200)
         #logger.log_port_connection(port, "successful", None)
         # print("Connexion au port : " + port + " réussie.")
     except Exception as e:
