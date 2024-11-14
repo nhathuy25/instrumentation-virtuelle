@@ -6,6 +6,7 @@ et de pouvoir les exécuter en ligne de commande.
 - Khoa Vu
 - Huy Nguyen
 - Jules Toupin
+- Lina EL MEKAOUI
 """
 
 #----------------------------section-import------------------------------- 
@@ -27,69 +28,7 @@ variable d'entrée :
 variable de sortie :
 """
 
-"""
-Propriété fonction 
-Description : Création d'une connexion série    
-auteur/autrice : Jules Toupin    
-variable d'entrée : aucune    
-variable de sortie : un objet de type Serial
-"""
-def create_serial():
-    return Serial()
-
-
-"""
-Propriété fonction 
-Description : Connexion à un port série    
-auteur/autrice : Jules Toupin    
-variable d'entrée : port : le port à connecter, ser : l'objet de type Serial que l'on veut connecter au port    
-variable de sortie : un booléen qui valide la connexion ou non et l'objet de type Serial
-"""
-# Connexion à un port série
-def port_connection(port,ser):
-    try:
-        ser = Serial(port, 115200)
-        #logger.log_port_connection(port, "successful", None)
-        # print("Connexion au port : " + port + " réussie.")
-    except Exception as e:
-        #logger.log_port_connection(port, "failed", e)
-        # print("Connexion au port : " + port + " échouée...")
-        # print(e)
-        return False,ser
-    return True,ser
-
-"""
-Propriété fonction 
-Description : Méthode pour établir une connexion à la caméra sélectionnée avec son nom
-    depend de la fonction list_ports_camera pour obtenir le nom de la camera
-
-    Commentaire 24/10: La fonction peut se servir a rien, et on utilise connecter_camera() et un indice defini par le GUI
-
-auteur/autrice : Huy NGUYEN    
-variable d'entrée :     aucune
-variable de sortie :    
-
- -- Version acienne:
-def connection_camera():
-
-    # Récupérer le nom de la caméra sélectionnée dans la liste déroulante
-    self.ui.cam = str(self.ui.camera_co_listbox.currentItem().text())
-    if (self.ui.cam):
-        # Etablir la connexion à la caméra en utilisant le nom de la caméra
-        self.ui.camera_connected = Laser.camera_connection(self.ui.cam)
-
-"""
-def connection_camera():
-    liste_cameras, message = list_ports_camera()
-    if (len(liste_cameras) != 0):
-        # Récupérer le nom de la caméra sélectionnée dans la liste déroulante
-        cam = liste_cameras[0]
-        # Etablir la connexion à la caméra en utilisant le nom de la caméra
-        camera_connected = connecter_camera(cam)
-        return camera_connected
-    else:
-        return None
-
+# --------------- CAMERA -------------------
 """
 Propriété fonction 
 Description : Fonction pour connecter à la camera à partir de l'indice de la camera
@@ -118,85 +57,10 @@ def connecter_camera(id_cam):
 
 """
 Propriété fonction 
-Description : Méthode pour obtenir les informations sur le dispositif  
-auteur/autrice : Jules Toupin    
-variable d'entrée : Laser_connecte : un booléen qui valide la connexion ou non;
-                  Laser_ser : l'objet de type Serial connecté au dispositif    
-variable de sortie : aucune idée de ce que ces 4 variables retournées sont
-"""
-def get_device_info(Laser_connecte,Laser_ser):
-    # Si le contrôleur est connecté
-        if Laser_connecte == 0:
-            # Envoie de commandes au port série pour obtenir les informations
-            Laser_ser.write('GetDevInfo,Controller,0,Name\n'.encode())
-            name = Laser_ser.readline().decode('ascii','replace')
-            # print(name)
-            Laser_ser.write('GetDevInfo,Controller,0,Version\n'.encode())
-            vers = Laser_ser.readline().decode('ascii','replace')
-            # print(vers)
-            Laser_ser.write('GetDevInfo,SensorHead,0,Name\n'.encode())
-            nameSH = Laser_ser.readline().decode('ascii','replace')
-            # print(nameSH)
-            Laser_ser.write('GetDevInfo,SensorHead,0,Version\n'.encode())
-            versSH = Laser_ser.readline().decode('ascii','replace')
-            # print(versSH)
-            # Mise à jour de l'interface utilisateur avec les informations obtenues
-            #self.ui.device_info_l.setText("\nControler:\n"+ name + vers +"Laser:\n"+ nameSH + versSH)
-            #logger.log_device_info(name, vers, nameSH, versSH)
-            return name,vers,nameSH,versSH
-
-    
-"""
-Propriété fonction 
-Description : Méthode pour lister les ports disponibles pour le dispositif
-auteur/autrice : Jules Toupin    
-variable d'entrée : aucune
-variable de sortie : liste_ports : une liste des ports disponibles,
-                     message : un message qui indique si des ports ont été trouvés ou non
-"""
-def list_ports_device():
-    # Récupération des ports série disponibles
-    ports = serial.tools.list_ports.comports()
-    
-    # Effacement de la liste des ports
-    liste_ports = []
-    # Si des ports sont disponibles
-    if (len(ports) != 0):
-        devices = []
-        # Pour chaque port disponible, ajout à la liste des ports de l'interface utilisateur
-        for p in ports:
-            liste_ports.append(p.device)
-        return liste_ports,"devices found"
-    else:
-        return liste_ports,"No device found"
-
-"""
-Propriété fonction 
-Description : Méthode pour établir une connexion avec le dispositif
-auteur/autrice : Jules Toupin    
-variable d'entrée : port_str : le port sélectionné dans l'interface utilisateur,
-                    Laser_connecte : un booléen qui valide la connexion ou non
-variable de sortie : laser_connecte : un booléen qui valide la connexion ou non
-
-Update 24/10/2024: Huy a supprimé 'Laser.' 
-                'Laser_connecte = Laser.port_connection(port)[0]' -> 'Laser_connecte = port_connection(port)[0]'
-"""
-def connection_device(port_str,Laser_connecte):
-    # Récupération du port sélectionné dans l'interface utilisateur
-    port = str(port_str)
-    # Si un port est sélectionné
-    if (port):
-        # Tentative de connexion au port
-        Laser_connecte = port_connection(port)[0]
-    return Laser_connecte
-
-
-"""
-Propriété fonction 
 Description : Méthode pour lister les caméras disponibles
 auteur/autrice : Jules Toupin    
-variable d'entrée : aucune
-variable de sortie : liste_cameras : une liste des indices des caméras disponibles,
+variable d'entrée :     aucune
+variable de sortie :    liste_cameras : une liste des indices des caméras disponibles,
                         message : un message qui indique si des caméras ont été trouvées ou non
 """
 def list_ports_camera():
@@ -222,21 +86,9 @@ def list_ports_camera():
         i -= 1
     # Si aucune caméra n'a été trouvée, afficher un message approprié dans la liste déroulante
     if (len(arr)==0):
-        return liste_cameras,"No device found"
+        return liste_cameras,"Aucune camera trouvee"
     else:
-        return liste_cameras,"devices found"
-    
-
-"""
-Ancien programme
-# Méthode pour établir une connexion à la caméra sélectionnée dans la liste déroulante camera_co_listbox
-def connection_camera(self):
-    # Récupérer le nom de la caméra sélectionnée dans la liste déroulante
-    self.ui.cam = str(self.ui.camera_co_listbox.currentItem().text())
-    if (self.ui.cam):
-        # Etablir la connexion à la caméra en utilisant le nom de la caméra
-        self.ui.camera_connected = Laser.camera_connection(self.ui.cam)
-"""
+        return liste_cameras,"Cameras trouvees"
 
 """
 Propriété fonction 
@@ -267,13 +119,6 @@ def save_image(cam_id):
         print(f"Image saved at: {image_path}")
     else:
         print("Erreur: Impossible de capturer l'image")
-
-def Acquisition(self):
-    print("Acquisition")
-    #logger.log_camera_acquisition()
-    self.save_image()
-    Vu=self.get_VuMetre(pourcentage=1)        
-    # print("Vu = "+str(Vu))
 
 """
 Propriété fonction 
@@ -372,70 +217,194 @@ def display_camera_feed(id_cam=0): # l'indice de camera est mis par defaut a 0
     camera.release()
     cv2.destroyAllWindows()
 
+# --------------- LASER -------------------
 """
-    # Méthode pour mettre à jour l'image de fond de l'interface utilisateur
-    def update_background(self):
-        if (self.ui.camera_connected): # Si la caméra est connectée
-            self.ui.camera_return.setPixmap(self.read_camera()) # Mettre à jour l'image de la caméra
+Propriété fonction 
+Description : Création d'une connexion série    
+auteur/autrice : Jules Toupin    
+variable d'entrée : aucune    
+variable de sortie : un objet de type Serial
+"""
+def create_serial():
+    return Serial()
+
+
+"""
+Propriété fonction 
+Description : Connexion à un port série    
+auteur/autrice : Jules Toupin    
+variable d'entrée : port : le port à connecter, ser : l'objet de type Serial que l'on veut connecter au port    
+variable de sortie : un booléen qui valide la connexion ou non et l'objet de type Serial
+"""
+# Connexion à un port série
+def port_connection(port,ser):
+    try:
+        ser = Serial(port, 9600)
+        #logger.log_port_connection(port, "successful", None)
+        # print("Connexion au port : " + port + " réussie.")
+    except Exception as e:
+        #logger.log_port_connection(port, "failed", e)
+        # print("Connexion au port : " + port + " échouée...")
+        # print(e)
+        return False,ser
+    return True,ser
+
+"""
+Propriété fonction 
+Description : Méthode pour obtenir les informations sur le dispositif  
+auteur/autrice : Jules Toupin    
+variable d'entrée : Laser_connecte : un booléen qui valide la connexion ou non;
+                  Laser_ser : l'objet de type Serial connecté au dispositif    
+variable de sortie : aucune idée de ce que ces 4 variables retournées sont
+"""
+def get_device_info(Laser_connecte,Laser_ser):
+    # Si le contrôleur est connecté
+        if Laser_connecte == 0:
+            # Envoie de commandes au port série pour obtenir les informations
+            Laser_ser.write('GetDevInfo,Controller,0,Name\n'.encode())
+            name = Laser_ser.readline().decode('ascii','replace')
+            # print(name)
+            Laser_ser.write('GetDevInfo,Controller,0,Version\n'.encode())
+            vers = Laser_ser.readline().decode('ascii','replace')
+            # print(vers)
+            Laser_ser.write('GetDevInfo,SensorHead,0,Name\n'.encode())
+            nameSH = Laser_ser.readline().decode('ascii','replace')
+            # print(nameSH)
+            Laser_ser.write('GetDevInfo,SensorHead,0,Version\n'.encode())
+            versSH = Laser_ser.readline().decode('ascii','replace')
+            # print(versSH)
+            # Mise à jour de l'interface utilisateur avec les informations obtenues
+            #self.ui.device_info_l.setText("\nControler:\n"+ name + vers +"Laser:\n"+ nameSH + versSH)
+            #logger.log_device_info(name, vers, nameSH, versSH)
+            return name,vers,nameSH,versSH
+
+    
+"""
+Propriété fonction 
+Description : Méthode pour lister les ports disponibles pour le dispositif
+auteur/autrice : Jules Toupin    
+variable d'entrée : aucune
+variable de sortie : liste_ports : une liste des ports disponibles,
+                     message : un message qui indique si des ports ont été trouvés ou non
+"""
+def list_ports_device():
+    # Récupération des ports série disponibles
+    ports = serial.tools.list_ports.comports()
+    
+    # Effacement de la liste des ports
+    liste_ports = []
+    # Si des ports sont disponibles
+    if (len(ports) != 0):
+        devices = []
+        # Pour chaque port disponible, ajout à la liste des ports de l'interface utilisateur
+        for p in ports:
+            liste_ports.append(p.device)
+        return liste_ports,"devices found"
+    else:
+        return liste_ports,"No device found"
+
+"""
+Propriété fonction 
+Description : Méthode pour établir une connexion avec le dispositif
+auteur/autrice : Jules Toupin    
+variable d'entrée : port_str : le port sélectionné dans l'interface utilisateur,
+                    Laser_connecte : un booléen qui valide la connexion ou non
+variable de sortie : laser_connecte : un booléen qui valide la connexion ou non
+
+Update 24/10/2024: Huy a supprimé 'Laser.' 
+                'Laser_connecte = Laser.port_connection(port)[0]' -> 'Laser_connecte = port_connection(port)[0]'
+"""
+def connection_device(port_str):
+    # Récupération du port sélectionné dans l'interface utilisateur
+    port = str(port_str)
+    # Si un port est sélectionné
+    if (port):
+        # Tentative de connexion au port
+        Laser_connecte = port_connection(port)[0]
+    return Laser_connecte
+
+"""
+Propriété fonction 
+Description : Méthode pour gérer l'état du faisceau laser
+auteur/autrice : Jules Toupin    
+variable d'entrée : Laser_connecte : un booléen qui valide la connexion ou non,
+                    Laser_ser : l'objet de type Serial connecté au dispositif
+variable de sortie : etat_laser : un str qui indique l'état du laser
+"""
+def handle_beam(Laser_connecte,Laser_ser):
+    etat_laser = "inconnue"
+    if Laser_connecte == 1: # Si le laser est connecté
+        Laser_ser.write('Get,SensorHead,0,Laser\n'.encode()) # Envoyer une commande pour récupérer l'état du faisceau laser
+        actif = Laser_ser.readline().decode('ascii','replace') # Lire la réponse du laser
+        if(actif == "0\n"): # Si le faisceau est éteint
+            """
+            ancien programme gui
+            text_bouton = "Off" # Mettre à jour le texte du bouton
+            self.ui.control_button.setText("Off") # Mettre à jour le texte du bouton
+            self.ui.control_pan.setStyleSheet("background-color: lime;") # Mettre à jour la couleur de fond de la zone de contrôle
+            """
+            Laser_ser.write('Set,SensorHead,0,Laser,1\n'.encode()) # Envoyer une commande pour allumer le faisceau laser
+            etat_laser = "On"
+            #logger.log_laser_connect()
+        if(actif== "1\n"): # Si le faisceau est allumé
+            """
+            ancien programme gui
+            self.ui.control_button.setText("On") # Mettre à jour le texte du bouton
+            self.ui.control_pan.setStyleSheet("background-color: pink;") # Mettre à jour la couleur de fond de la zone de contrôle
+            """
+            Laser_ser.write('Set,SensorHead,0,Laser,0\n'.encode()) # Envoyer une commande pour éteindre le faisceau laser
+            etat_laser = "Off"
+            #logger.log_laser_disconnect()
+    # else:
+    #     print("ControlFrame.handle_beam: No controller connected...") # Afficher un message d'erreur si le laser n'est pas connecté
+    #logger.log_controller_state(self.ui.controller_connected)
+    return etat_laser
+
+"""
+Propriété fonction 
+Description : Méthode pour récupérer la puissance du laser
+auteur/autrice : Jules Toupin    
+variable d'entrée : Laser_connecte : un booléen qui valide la connexion ou non,
+                    Laser_ser : l'objet de type Serial connecté au dispositif
+variable de sortie : actif : puissance du laser, voir ancien programme pour voir comment le gérer 
+"""
+def update_progress_bar(Laser_connecte,Laser_ser):
+    if Laser_connecte == 1: # Si le laser est connecté
+        Laser_ser.write('Get,SignalLevel,0,Value\n'.encode()) # Envoie une commande pour récupérer la puissance du laser
+        actif = Laser_ser.readline().decode('ascii','replace') # Lire la réponse du laser
+        #print("retour laser = " + actif)
+        return actif 
+
+"""
+Propriété fonction 
+Description : Méthode pour récupérer la puissance du laser
+auteur/autrice : Jules Toupin    
+variable d'entrée : Laser_connecte : un booléen qui valide la connexion ou non,
+                    Laser_ser : l'objet de type Serial connecté au dispositif
+variable de sortie : valeur du vue mètre 
+"""
+def get_VuMetre(Laser_connecte,Laser_ser,pourcentage=1):
+    if Laser_connecte == 1: # Si le laser est connecté
+        Laser_ser.write('Get,SignalLevel,0,Value\n'.encode()) # Envoie une commande pour récupérer la puissance du laser
+        actif = Laser_ser.readline().decode('ascii','replace') # Lire la réponse du laser
+        if pourcentage==1:
+            #logger.log_viewmeter_acquisition(int(float(actif)/775*100))
+            return(int(float(actif)/775*100)) # Renvoie le valeur du VU metre en pourcentage
         else:
-            self.ui.camera_return.setStyleSheet("background-color: black;") # Sinon, mettre un fond noir
-        QTimer.singleShot(100, self.update_background) # Programmer une nouvelle exécution de la fonction après 100 ms
-
-    # Méthode pour gérer l'état du faisceau laser
-    def handle_beam(self):
-        if self.ui.controller_connected: # Si le laser est connecté
-            Laser.ser.write('Get,SensorHead,0,Laser\n'.encode()) # Envoyer une commande pour récupérer l'état du faisceau laser
-            actif = Laser.ser.readline().decode('ascii','replace') # Lire la réponse du laser
-            if(actif == "0\n"): # Si le faisceau est éteint
-                self.ui.control_button.setText("Off") # Mettre à jour le texte du bouton
-                self.ui.control_pan.setStyleSheet("background-color: lime;") # Mettre à jour la couleur de fond de la zone de contrôle
-                Laser.ser.write('Set,SensorHead,0,Laser,1\n'.encode()) # Envoyer une commande pour allumer le faisceau laser
-                #logger.log_laser_connect()
-            if(actif== "1\n"): # Si le faisceau est allumé
-                self.ui.control_button.setText("On") # Mettre à jour le texte du bouton
-                self.ui.control_pan.setStyleSheet("background-color: pink;") # Mettre à jour la couleur de fond de la zone de contrôle
-                Laser.ser.write('Set,SensorHead,0,Laser,0\n'.encode()) # Envoyer une commande pour éteindre le faisceau laser
-                #logger.log_laser_disconnect()
-        # else:
-        #     print("ControlFrame.handle_beam: No controller connected...") # Afficher un message d'erreur si le laser n'est pas connecté
-        #logger.log_controller_state(self.ui.controller_connected)
-
-    # Méthode pour mettre à jour la barre de progression de la puissance du laser
-    def update_progress_bar(self):
-        if self.ui.controller_connected: # Si le laser est connecté
-            Laser.ser.write('Get,SignalLevel,0,Value\n'.encode()) # Envoie une commande pour récupérer la puissance du laser
-            actif = Laser.ser.readline().decode('ascii','replace') # Lire la réponse du laser
-            #print("retour laser = " + actif)
-            self.ui.signal_bar.setValue(int(float(actif)/775*100)) # Mettre à jour la barre de progression et convertir la valeur en pourcentage
-        QTimer.singleShot(250, self.update_progress_bar)# Programmer une nouvelle exécution de la fonction après 250 ms
-     #Récupère les coordonnées de la souris (x et y)
-
-    def get_VuMetre(self,pourcentage=1):
-        if self.ui.controller_connected: # Si le laser est connecté
-            Laser.ser.write('Get,SignalLevel,0,Value\n'.encode()) # Envoie une commande pour récupérer la puissance du laser
-            actif = Laser.ser.readline().decode('ascii','replace') # Lire la réponse du laser
-            if pourcentage==1:
-                #logger.log_viewmeter_acquisition(int(float(actif)/775*100))
-                return(int(float(actif)/775*100)) # Renvoie le valeur du VU metre en pourcentage
-            else:
-                return actif # Renvoie le valeur du VU metre
-        # else:
-        #     print("ControlFrame.get_VuMetre: No controller connected...")
-        #logger.log_controller_state(self.ui.controller_connected)
-
-    #La def pour clear:
-    def clearing_points (self):
-        self.ui.camera_return.vider()
+            return actif # Renvoie le valeur du VU metre
+    # else:
+    #     print("ControlFrame.get_VuMetre: No controller connected...")
+    #logger.log_controller_state(self.ui.controller_connected)
 
 
 # Vérifier que ce fichier est le fichier principal qui est exécuté
 if __name__ == "__main__":
-    # Créer une instance de QApplication
-    app = QtWidgets.QApplication(sys.argv)
-    # Créer une instance de la classe Main
-    MainWindow = Main()
-    # Afficher la fenêtre principale
-    MainWindow.show()
-    # Lancer la boucle principale de l'application jusqu'à sa fermeture
-    sys.exit(app.exec_())
-"""
+
+    # Liste des caméras disponibles
+    list_cameras, message = list_ports_camera()
+
+    print(message)
+    print("Nombre de camera detecte: ",len(list_cameras))
+
+    # Smile! You're on the camera
+    save_image(0)
