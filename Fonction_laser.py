@@ -240,11 +240,11 @@ def connection_camera(self):
 
 """
 Propriété fonction 
-Description : Fonction pour sauvegarder l'image de la camera. Les images sauvegardées sont stockées dans un répertoire nommé 'Measures'
+Description : Fonction pour sauvegarder l'image de la camera. Les images sauvegardées sont stockées dans un répertoire nommé '/Measures'
     
 auteur/autrice : Huy NGUYEN
     
-variable d'entrée :     - aucune
+variable d'entrée :     - id_cam
 variable de sortie :    - aucune
 """
 # Repertoire des images sauvegardées
@@ -291,13 +291,15 @@ def read_camera(id_cam):
     # Verifier la connexion de la camera, la variable camera est un objet de type VideoCapture
     camera = connecter_camera(id_cam)
     
-    # If a camera is connected
+    # Si la camera est connectee
     if camera is not None:
         # Lire l'image du flux vidéo et la convertir en image RGB
         ret, frame = camera.read()
         if ret:
             # Convertir l'image BGR (par défaut de OpenCV) en RGB
-            rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            #rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+            rgb_image = frame
             # Return the RGB image
             return rgb_image  
         
@@ -323,6 +325,38 @@ def convert_cv_qt(self, cv_img):
     # Redimensionner l'image pour l'affichage
     p = convert_to_Qt_format.scaled(400, 315, Qt.KeepAspectRatio)
     return QPixmap.fromImage(p)
+
+
+def display_camera_feed(camera_id=0):
+    # Initialize the VideoCapture object with the specified camera ID
+    camera = cv2.VideoCapture(camera_id)
+    
+    # Check if the camera is opened successfully
+    if not camera.isOpened():
+        print("Error: Could not open camera.")
+        return
+
+    # Loop to continuously capture frames and display them
+    while True:
+        # Capture frame-by-frame
+        ret, frame = camera.read()
+        
+        # If frame is read correctly, ret will be True
+        if not ret:
+            print("Error: Could not read frame.")
+            break
+
+        # Display the resulting frame in a window
+        cv2.imshow('Camera Feed', frame)
+
+        # Press 'q' to exit the loop
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    # Release the camera and close the window
+    camera.release()
+    cv2.destroyAllWindows()
+
 """
     # Méthode pour mettre à jour l'image de fond de l'interface utilisateur
     def update_background(self):
