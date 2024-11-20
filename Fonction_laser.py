@@ -189,12 +189,7 @@ variable de sortie  : None
 """
 def display_camera_feed(id_cam=0): # l'indice de camera est mis par defaut a 0
     # Initialiser la camera de type cv2.VideoCapture avec l'indice de la camera
-    camera = cv2.VideoCapture(id_cam)
-    
-    # Verifier si la camera est ouverte
-    if not camera.isOpened():
-        print("Erreur: Impossible d'ouvrir la camera.")
-        return
+    camera = connecter_camera(id_cam)
 
     # Loop pour lire les images de la camera
     while True:
